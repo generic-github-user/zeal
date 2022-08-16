@@ -1,0 +1,25 @@
+start: ( tree | "\n")+
+tree: (info | pair) _NL [_INDENT tree+ _DEDENT]
+_NL: /(\r?\n[\t ]*)+/
+comment: "##" ANY*
+wordlike: WORD | (WORD "-" WORD)
+TEXT: (LETTER | " " | PUNCTUATION | DIGIT)+
+ALPHANUMERIC: LETTER | DIGIT
+
+PUNCTUATION: ";" | "," | "-" | "_" | "/" | "'" | "\""
+		| "." | "{" | "}" | "(" | ")" | "[" | "]" | "~"
+		| "`" | ">" | "?" | "=" | "&" | "*" | "#" | "%"
+ANY: LETTER | PUNCTUATION | DIGIT | " "
+
+pair: TEXT ":" " "? info
+info: TEXT
+
+%import common.CNAME -> NAME
+%import common.WS_INLINE
+%declare _INDENT _DEDENT
+%ignore WS_INLINE
+
+%import common.LETTER -> LETTER
+%import common.WORD -> WORD
+%import common.DIGIT -> DIGIT
+
