@@ -6,8 +6,8 @@ import argparse
 import urllib.parse
 
 argparser = argparse.ArgumentParser()
-argparser.add_argument('path')
-argparser.add_argument('--to')
+argparser.add_argument('path', help='Input file for the zeal processor; can be relative or absolute but should generally end with .zl')
+argparser.add_argument('--to', help='Output format; one of md/markdown, tree')
 
 class TreeIndenter(Indenter):
     NL_type = '_NL'
