@@ -1,11 +1,18 @@
-//start: ( tree | "\n")+
 start: tree+
 tree: ( multiline | info | pair | "\t"* ) _NL [_INDENT tree+ _DEDENT]
 _NL: /\r?\n([\t ]*)+/
-comment: "##" ANY*
-wordlike: WORD | (WORD "-" WORD)
-TEXT: (LETTER | " " | PUNCTUATION | DIGIT)+
+
+LOWERCASE: "a".."z"
+UPPERCASE: "A".."Z"
+LETTER: LOWERCASE | UPPERCASE
+
+NONZERO: "1".."9"
+DIGIT: NONZERO | "0"
 ALPHANUMERIC: LETTER | DIGIT
+
+word: LETTER+
+!wordlike: (word | (word "-" word)) PUNCTUATION?
+text: (expression " ")* expression
 
 BRACKETS: "[" | "]"
 PUNCTUATION: ";" | "," | "-" | "_" | "/" | "'" | "\""
@@ -13,19 +20,12 @@ PUNCTUATION: ";" | "," | "-" | "_" | "/" | "'" | "\""
 		| "`" | ">" | "?" | "=" | "&" | "*" | "#" | "%"
 ANY: LETTER | PUNCTUATION | DIGIT | " "
 
-//pair: TEXT ":" info
-//info: TEXT | (TEXT _NL)+ TEXT
-//multiline: (TEXT "\n" "\t"*)+ TEXT
-
-pair: TEXT ":" " "? (info | multiline)
-info.1: TEXT
+pair: text ":" " "? (info | multiline)
+info.1: text
 multiline.2: "[" (info _NL?)+ "]"
+group: "{" text "}"
+expression: group | wordlike | command
+!command: "%" expression
 
 %import common.WS_INLINE
 %declare _INDENT _DEDENT
-%ignore WS_INLINE
-
-%import common.LETTER -> LETTER
-%import common.WORD -> WORD
-%import common.DIGIT -> DIGIT
-
