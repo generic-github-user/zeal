@@ -38,6 +38,9 @@ class Node:
                 subclass = Node
                 match c.data:
                     case 'pair': subclass = Pair
+                    case 'multiline': subclass = Multiline
+                    case 'info': subclass = Info
+                    case 'tree': subclass = Tree
                 self.children.append(subclass(
                     c, self, self.depth+1, root=self.root if self.root else self))
             elif c is None: self.children.append(c)
@@ -55,11 +58,22 @@ class Node:
     def __str__(self):
         return f'{type(self).__name__} <{self.type}> ({self.depth})' + '\n' + '\n'.join('  '*self.depth + str(n) for n in self.children)
 
+class Tree(Node):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class Info(Node):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 class Pair(Node):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.key, self.value = self.children
 
+
+class Multiline(Node):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 with open('grammar.lark', 'r') as grammar:
     parser = Lark(grammar.read(), parser='lalr', lexer='contextual', postlex=TreeIndenter(), debug=True)
     #parser = Lark(grammar.read(), parser='earley', lexer='basic', postlex=TreeIndenter())
@@ -71,5 +85,7 @@ def parse():
     return tree
     #print(parsed.pretty()[:2000])
 
-print(parse())
+P = parse()
+print(P)
+print(P.markdown())
 
