@@ -2,6 +2,12 @@ import lark
 from lark import Lark
 from lark.indenter import Indenter
 
+import argparse
+
+argparser = argparse.ArgumentParser()
+argparser.add_argument('path')
+argparser.add_argument('--to')
+
 class TreeIndenter(Indenter):
     NL_type = '_NL'
     OPEN_PAREN_types = []
@@ -114,14 +120,21 @@ with open('grammar.lark', 'r') as grammar:
     parser = Lark(grammar.read(), parser='lalr', lexer='contextual', postlex=TreeIndenter(), debug=True)
     #parser = Lark(grammar.read(), parser='earley', lexer='basic', postlex=TreeIndenter())
 
-def parse():
-    with open('test.zl', 'r') as f:
+def parse(path):
+    with open(path, 'r') as f:
         parsed = parser.parse(f.read())
     tree = Node(parsed)
     return tree
     #print(parsed.pretty()[:2000])
 
-P = parse()
-print(P)
-print(P.markdown())
+# P = parse('test.zl')
+# print(P)
+# print(P.markdown())
+
+args = argparser.parse_args()
+P = parse(args.path)
+if args.to in ['md', 'markdown']:
+    print(P.markdown())
+elif args.to == 'tree':
+    print(P)
 
