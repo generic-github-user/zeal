@@ -13,3 +13,10 @@ animals
 						snakes
 				
 				filters: wiki-links capitalize
+		aquatic
+				items
+						fish
+								salmon
+						molluscs
+						whales
+						jellyfish
