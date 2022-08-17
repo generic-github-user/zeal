@@ -49,10 +49,15 @@ class Node:
                 assert isinstance(c, lark.Token), c
                 self.children.append(Token(c))
 
-        items = list(filter(lambda x: x.type == 'pair' and x.text() == 'items', self.children))
+        items = list(filter(lambda x:
+                (x.type == 'pair' and x.text() == 'items') or
+                (x.type == 'tree' and x.children and x[0].text() == 'items'), self.children))
         self.items = items[0] if items else None
+
         info = list(filter(lambda x: x.type == 'pair' and x.key.text() == 'info', self.children))
         self.info = info[0].value if info else None
+        
+        self.tags = []
 
     def markdown(self) -> str:
         return '\n'.join(c.markdown() for c in self.children)
@@ -63,14 +68,17 @@ class Node:
     def __str__(self):
         return f'{type(self).__name__} <{self.type}> ({self.depth})' + '\n' + '\n'.join('  '*self.depth + str(n) for n in self.children)
 
+    def __getitem__(self, key): return self.children[key]
+
 class Tree(Node):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def markdown(self) -> str:
+        if self.children and self[0].text() in ['items']: return ''
         result = '\n'.join(c.markdown() for c in self.children)
         if self.info: result += self.info.markdown()
-        if self.items: result += '\n'.join(f'- {x}' for x in self)
+        if self.items: result += '\n'.join(f'- {x.markdown()}' for x in self.items[1:])
         return result
 
 class Info(Node):
@@ -78,9 +86,12 @@ class Info(Node):
         super().__init__(*args, **kwargs)
 
     def markdown(self) -> str:
-        result = ('# ' if self.depth == 2 and self.parent.type == 'tree' else '')\
-            + ('## ' if self.depth == 3 and self.parent.type == 'tree' else '')\
-            + '\n'.join(c.markdown() for c in self.children)
+        result = ''
+        if 1 < self.depth < 4 and self.parent.type == 'tree':
+            result += '#'*(self.depth-1)+' '
+            self.tags.append('header')
+        result += '\n'.join(c.markdown() for c in self.children)
+        if 'header' in self.tags: result += '\n'
         return result
 
 class Pair(Node):
