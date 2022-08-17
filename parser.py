@@ -3,6 +3,7 @@ from lark import Lark
 from lark.indenter import Indenter
 
 import argparse
+import urllib.parse
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('path')
@@ -48,6 +49,7 @@ class Node:
                     case 'multiline': subclass = Multiline
                     case 'info': subclass = Info
                     case 'tree': subclass = Tree
+                    case 'command': subclass = Command
                 self.children.append(subclass(
                     c, self, self.depth+1, root=self.root if self.root else self))
             elif c is None: self.children.append(c)
@@ -66,7 +68,9 @@ class Node:
         self.tags = []
 
     def markdown(self) -> str:
-        return '\n'.join(c.markdown() for c in self.children)
+        if self.type in ['word', 'wordlike']: return ''.join(c.markdown() for c in self.children)
+        elif self.type == 'text': return ' '.join(c.markdown() for c in self.children)
+        else: return '\n'.join(c.markdown() for c in self.children)
 
     def text(self):
         return ''.join(c.text() for c in self.children)
@@ -97,7 +101,7 @@ class Info(Node):
         if 1 < self.depth < 4 and self.parent.type == 'tree':
             result += '#'*(self.depth-1)+' '
             self.tags.append('header')
-        result += '\n'.join(c.markdown() for c in self.children)
+        result += ''.join(c.markdown() for c in self.children)
         if 'header' in self.tags: result += '\n'
         return result
 
@@ -112,8 +116,23 @@ class Multiline(Node):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def markdown(self) -> str:
+    def markdown(self, *args, **kwargs) -> str:
         return ' '.join(c.markdown() for c in self.children)
+
+class Command(Node):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.symbol, self.content = self.children
+        except ValueError as E:
+            print(E)
+            print(self)
+
+    def markdown(self, *args, **kwargs) -> str:
+        result = self.content.markdown()
+        if self.symbol.text() == '%':
+            result = f'[{result}](https://en.wikipedia.org/wiki/{urllib.parse.quote(result)})'
+        return result
 
 
 with open('grammar.lark', 'r') as grammar:
