@@ -12,9 +12,10 @@ DIGIT: NONZERO | "0"
 ALPHANUMERIC: LETTER | DIGIT
 
 word: LETTER+
-wordlike: (word | (word "-" word)) PUNCTUATION?
+!wordlike: (word | (word "-" word)) PUNCTUATION?
 //TEXT: (LETTER | " " | PUNCTUATION | DIGIT)+
-text: (wordlike | group)+
+//text: ((wordlike | group) " ")* (wordlike | group)
+text: (expression " ")* expression
 
 BRACKETS: "[" | "]"
 PUNCTUATION: ";" | "," | "-" | "_" | "/" | "'" | "\""
@@ -22,14 +23,13 @@ PUNCTUATION: ";" | "," | "-" | "_" | "/" | "'" | "\""
 		| "`" | ">" | "?" | "=" | "&" | "*" | "#" | "%"
 ANY: LETTER | PUNCTUATION | DIGIT | " "
 
-//pair: TEXT ":" info
-//info: TEXT | (TEXT _NL)+ TEXT
-//multiline: (TEXT "\n" "\t"*)+ TEXT
-
-pair: TEXT ":" " "? (info | multiline)
-info.1: TEXT
+pair: text ":" " "? (info | multiline)
+info.1: text
 multiline.2: "[" (info _NL?)+ "]"
+group: "{" text "}"
+expression: group | wordlike | command
+!command: "%" expression
 
 %import common.WS_INLINE
 %declare _INDENT _DEDENT
-
+//%ignore WS_INLINE
