@@ -1,20 +1,26 @@
-start: ( tree | "\n")+
-tree: (info | pair) _NL [_INDENT tree+ _DEDENT]
-_NL: /(\r?\n[\t ]*)+/
+//start: ( tree | "\n")+
+start: tree+
+tree: ( multiline | info | pair | "\t"* ) _NL [_INDENT tree+ _DEDENT]
+_NL: /\r?\n([\t ]*)+/
 comment: "##" ANY*
 wordlike: WORD | (WORD "-" WORD)
 TEXT: (LETTER | " " | PUNCTUATION | DIGIT)+
 ALPHANUMERIC: LETTER | DIGIT
 
+BRACKETS: "[" | "]"
 PUNCTUATION: ";" | "," | "-" | "_" | "/" | "'" | "\""
-		| "." | "{" | "}" | "(" | ")" | "[" | "]" | "~"
+		| "." | "{" | "}" | "(" | ")" | "~"
 		| "`" | ">" | "?" | "=" | "&" | "*" | "#" | "%"
 ANY: LETTER | PUNCTUATION | DIGIT | " "
 
-pair: TEXT ":" " "? info
-info: TEXT
+//pair: TEXT ":" info
+//info: TEXT | (TEXT _NL)+ TEXT
+//multiline: (TEXT "\n" "\t"*)+ TEXT
 
-%import common.CNAME -> NAME
+pair: TEXT ":" " "? (info | multiline)
+info.1: TEXT
+multiline.2: "[" (info _NL?)+ "]"
+
 %import common.WS_INLINE
 %declare _INDENT _DEDENT
 %ignore WS_INLINE
