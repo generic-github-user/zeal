@@ -1,0 +1,15 @@
+filters: markdown
+animals
+		reptiles
+				info: [Reptiles, as most commonly defined, are the animals in the class
+				Reptilia, a paraphyletic grouping comprising all sauropsid amniotes
+				except Aves (birds). Living reptiles comprise turtles, crocodilians,
+				squamates (lizards and snakes) and rhynchocephalians (tuatara). As of
+				March 2022, the Reptile Database lists about the class includes about
+				11,700 species.]
+				
+				items
+						lizards
+						snakes
+				
+				filters: wiki-links capitalize
