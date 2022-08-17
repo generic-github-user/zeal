@@ -18,7 +18,7 @@ class Token:
             setattr(self, attr, getattr(self.source, attr))
             self.length = len(self.source)
 
-    def markdown(self): return self.value
+    def markdown(self) -> str: return self.value
     def text(self): return self.value
 
     def __str__(self):
@@ -54,7 +54,7 @@ class Node:
         info = list(filter(lambda x: x.type == 'pair' and x.key.text() == 'info', self.children))
         self.info = info[0].value if info else None
 
-    def markdown(self):
+    def markdown(self) -> str:
         return '\n'.join(c.markdown() for c in self.children)
 
     def text(self):
@@ -67,7 +67,7 @@ class Tree(Node):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def markdown(self):
+    def markdown(self) -> str:
         result = '\n'.join(c.markdown() for c in self.children)
         if self.info: result += self.info.markdown()
         if self.items: result += '\n'.join(f'- {x}' for x in self)
@@ -77,7 +77,7 @@ class Info(Node):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def markdown(self):
+    def markdown(self) -> str:
         result = ('# ' if self.depth == 2 and self.parent.type == 'tree' else '')\
             + ('## ' if self.depth == 3 and self.parent.type == 'tree' else '')\
             + '\n'.join(c.markdown() for c in self.children)
@@ -88,13 +88,13 @@ class Pair(Node):
         super().__init__(*args, **kwargs)
         self.key, self.value = self.children
 
-    def markdown(self): return ''
+    def markdown(self) -> str: return ''
 
 class Multiline(Node):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def markdown(self):
+    def markdown(self) -> str:
         return ' '.join(c.markdown() for c in self.children)
 
 
