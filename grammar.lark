@@ -1,4 +1,3 @@
-//start: ( tree | "\n")+
 start: tree+
 tree: ( multiline | info | pair | "\t"* ) _NL [_INDENT tree+ _DEDENT]
 _NL: /\r?\n([\t ]*)+/
@@ -13,8 +12,6 @@ ALPHANUMERIC: LETTER | DIGIT
 
 word: LETTER+
 !wordlike: (word | (word "-" word)) PUNCTUATION?
-//TEXT: (LETTER | " " | PUNCTUATION | DIGIT)+
-//text: ((wordlike | group) " ")* (wordlike | group)
 text: (expression " ")* expression
 
 BRACKETS: "[" | "]"
@@ -32,4 +29,3 @@ expression: group | wordlike | command
 
 %import common.WS_INLINE
 %declare _INDENT _DEDENT
-//%ignore WS_INLINE
