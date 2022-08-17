@@ -45,6 +45,10 @@ class Node:
                 assert isinstance(c, lark.Token), c
                 self.children.append(Token(c))
 
+        items = list(filter(lambda x: x.type == 'pair' and x.text() == 'items', self.children))
+        self.items = items[0] if items else None
+        info = list(filter(lambda x: x.type == 'pair' and x.key.text() == 'info', self.children))
+        self.info = info[0].value if info else None
     def text(self):
         return ''.join(c.text() for c in self.children)
 
