@@ -81,9 +81,11 @@ class Node:
         return ''.join(c.text() for c in self.children)
 
     def __str__(self):
-        return f'{type(self).__name__} <{self.type}> ({self.depth})' + '\n' + '\n'.join('  '*self.depth + str(n) for n in self.children)
+        return f'{type(self).__name__} <{self.type}> ({self.depth})' + \
+            '\n' + '\n'.join('  '*self.depth + str(n) for n in self.children)
 
     def __getitem__(self, key): return self.children[key]
+    def __getattr__(self, name): return None
 
 class Keyword(Node):
     def __init__(self, *args, **kwargs):
@@ -117,21 +119,8 @@ class Info(Node):
         if 'header' in self.tags: result += '\n'
         return result
 
-class Pair(Node):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.key, self.value = self.children
 
-    def markdown(self, *args, **kwargs) -> str:
-        if self.key.text() in ['info', 'format', 'filters', 'repo', 'keywords']:
-            return ''
-        if self.parent.parent.format:
-            r = self.parent.parent.format.text()
-            for a in ['key', 'value']:
-                r = r.replace('.' + a, getattr(self, a).markdown())
-            return r + '\n'
-        return f'{self.key.markdown()}: {self.value.markdown()}\n'
-
+# Generate a new Node subclass with specified attributes and methods
 def NodeType(name: str, *properties, **methods):
     class NewType(Node):
         def __init__(self, *args, **kwargs):
@@ -154,6 +143,17 @@ Command = NodeType('Command', 'symbol', 'content', markdown=command_markdown)
 def m_markdown(self, *args, **kwargs):
     return ' '.join(c.markdown() for c in self.children)
 Multiline = NodeType('Multiline', markdown=m_markdown)
+
+def pair_markdown(self, *args, **kwargs) -> str:
+    if self.key.text() in ['info', 'format', 'filters', 'repo', 'keywords']:
+        return ''
+    if self.parent.parent.format:
+        r = self.parent.parent.format.text()
+        for a in ['key', 'value']:
+            r = r.replace('.' + a, getattr(self, a).markdown())
+        return r + '\n'
+    return f'{self.key.markdown()}: {self.value.markdown()}\n'
+Pair = NodeType('Pair', 'key', 'value', markdown=pair_markdown)
 
 
 with open('grammar.lark', 'r') as grammar:
