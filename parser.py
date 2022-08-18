@@ -28,6 +28,10 @@ class Token:
     def markdown(self) -> str: return self.value
     def text(self): return self.value
 
+    def matches(self, p):
+        if isinstance(p, type): return isinstance(self, p)
+        elif callable(p): return p(self)
+
     def __str__(self):
         return f'Token <{self.type}, {self.line}:{self.column}> {self.value}'
 
@@ -71,6 +75,16 @@ class Node:
                     setattr(self, attr, n)
 
         self.tags = []
+
+    #def pair_attr():
+
+    def matches(self, p):
+        if isinstance(p, type): return isinstance(self, p)
+        #elif callable(p): return p(self)
+
+    def filter(self, *p):
+        return Node(children=list(filter(
+            lambda x: any(x.matches(y) for y in p), self.children)))
 
     def markdown(self, *args, **kwargs) -> str:
         if self.type in ['word', 'wordlike', 'quote', 'url']: return ''.join(c.markdown() for c in self.children)
