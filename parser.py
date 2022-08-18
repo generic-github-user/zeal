@@ -2,6 +2,13 @@ import lark
 from lark import Lark
 from lark.indenter import Indenter
 
+import argparse
+import urllib.parse
+
+argparser = argparse.ArgumentParser()
+argparser.add_argument('path', help='Input file for the zeal processor; can be relative or absolute but should generally end with .zl')
+argparser.add_argument('--to', help='Output format; one of md/markdown, tree')
+
 class TreeIndenter(Indenter):
     NL_type = '_NL'
     OPEN_PAREN_types = []
@@ -105,7 +112,7 @@ class Info(Node):
         if 1 < self.depth < 4 and self.parent.type == 'tree':
             result += '#'*(self.depth-1)+' '
             self.tags.append('header')
-        result += '\n'.join(c.markdown() for c in self.children)
+        result += ''.join(c.markdown() for c in self.children)
         if 'header' in self.tags: result += '\n'
         return result
 
@@ -128,22 +135,44 @@ class Multiline(Node):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def markdown(self) -> str:
+    def markdown(self, *args, **kwargs) -> str:
         return ' '.join(c.markdown() for c in self.children)
+
+class Command(Node):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.symbol, self.content = self.children
+        except ValueError as E:
+            print(E)
+            print(self)
+
+    def markdown(self, *args, **kwargs) -> str:
+        result = self.content.markdown()
+        if self.symbol.text() == '%':
+            result = f'[{result}](https://en.wikipedia.org/wiki/{urllib.parse.quote(result)})'
+        return result
 
 
 with open('grammar.lark', 'r') as grammar:
     parser = Lark(grammar.read(), parser='lalr', lexer='contextual', postlex=TreeIndenter(), debug=True)
     #parser = Lark(grammar.read(), parser='earley', lexer='basic', postlex=TreeIndenter())
 
-def parse():
-    with open('test.zl', 'r') as f:
+def parse(path):
+    with open(path, 'r') as f:
         parsed = parser.parse(f.read())
     tree = Node(parsed)
     return tree
     #print(parsed.pretty()[:2000])
 
-P = parse()
-print(P)
-print(P.markdown())
+# P = parse('test.zl')
+# print(P)
+# print(P.markdown())
+
+args = argparser.parse_args()
+P = parse(args.path)
+if args.to in ['md', 'markdown']:
+    print(P.markdown())
+elif args.to == 'tree':
+    print(P)
 
