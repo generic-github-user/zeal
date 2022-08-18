@@ -97,11 +97,11 @@ class Tree(Node):
 
     def markdown(self, aslist=False) -> str:
         if self.children and self[0].text() in ['items']: return ''
-        result = '\n'.join(c.markdown(aslist) for c in self.children)
+        result = ''.join(c.markdown(aslist) for c in self.children)
         if self.info: result += self.info.markdown()
-        if self.items: result += '\n'.join(x.markdown(True) for x in self.items[1:]) + '\n'
+        if self.items: result += ''.join(x.markdown(True) for x in self.items[1:]) + '\n'
         if aslist: result = '  '*(self.depth-3) + '- ' + result
-        return result
+        return result+('\n' if not aslist else '')
 
 class Info(Node):
     def __init__(self, *args, **kwargs):
@@ -128,8 +128,8 @@ class Pair(Node):
             r = self.parent.parent.format.text()
             for a in ['key', 'value']:
                 r = r.replace('.' + a, getattr(self, a).markdown())
-            return r
-        return f'{self.key.markdown()}: {self.value.markdown()}'
+            return r + '\n'
+        return f'{self.key.markdown()}: {self.value.markdown()}\n'
 
 class Multiline(Node):
     def __init__(self, *args, **kwargs):
