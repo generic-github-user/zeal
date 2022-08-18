@@ -134,20 +134,24 @@ class Multiline(Node):
     def markdown(self, *args, **kwargs) -> str:
         return ' '.join(c.markdown() for c in self.children)
 
-class Command(Node):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        try:
-            self.symbol, self.content = self.children
-        except ValueError as E:
-            print(E)
-            print(self)
 
-    def markdown(self, *args, **kwargs) -> str:
-        result = self.content.markdown()
-        if self.symbol.text() == '%':
-            result = f'[{result}](https://en.wikipedia.org/wiki/{urllib.parse.quote(result)})'
-        return result
+
+def NodeType(*properties, **methods):
+    class NewType:
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            for i, p in enumerate(properties):
+                setattr(self, p, self[i])
+    for n, m in methods.items(): setattr(NewType, n, m)
+    return NewType
+
+
+def command_markdown(self, *args, **kwargs) -> str:
+    result = self.content.markdown()
+    if self.symbol.text() == '%':
+        result = f'[{result}](https://en.wikipedia.org/wiki/{urllib.parse.quote(result)})'
+    return result
+Command = NodeType('symbol', 'content', markdown=command_markdown)
 
 
 with open('grammar.lark', 'r') as grammar:
