@@ -44,13 +44,9 @@ class Node:
         for c in self.source.children:
             if isinstance(c, lark.Tree):
                 subclass = Node
-                match c.data:
-                    case 'pair': subclass = Pair
-                    case 'multiline': subclass = Multiline
-                    case 'info': subclass = Info
-                    case 'tree': subclass = Tree
-                    case 'command': subclass = Command
-                    case 'keyword': subclass = Keyword
+                types = [Pair, Multiline, Info, Tree, Command, Keyword]
+                names = list(map(lambda t: t.__name__.lower(), types))
+                if c.data in names: subclass = types[names.index(c.data)]
                 self.children.append(subclass(
                     c, self, self.depth+1, root=self.root if self.root else self))
             elif c is None: self.children.append(c)
