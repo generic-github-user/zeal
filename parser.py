@@ -42,6 +42,8 @@ class Node:
                     case 'multiline': subclass = Multiline
                     case 'info': subclass = Info
                     case 'tree': subclass = Tree
+                    case 'command': subclass = Command
+                    case 'keyword': subclass = Keyword
                 self.children.append(subclass(
                     c, self, self.depth+1, root=self.root if self.root else self))
             elif c is None: self.children.append(c)
@@ -56,11 +58,16 @@ class Node:
 
         info = list(filter(lambda x: x.type == 'pair' and x.key.text() == 'info', self.children))
         self.info = info[0].value if info else None
+
+        form = list(filter(lambda x: x.type == 'pair' and x.key.text() == 'format', self.children))
+        self.format = form[0].value if form else None
         
         self.tags = []
 
     def markdown(self) -> str:
-        return '\n'.join(c.markdown() for c in self.children)
+        if self.type in ['word', 'wordlike', 'quote', 'url']: return ''.join(c.markdown() for c in self.children)
+        elif self.type == 'text': return ' '.join(c.markdown() for c in self.children)
+        else: return '\n'.join(c.markdown() for c in self.children)
 
     def text(self):
         return ''.join(c.text() for c in self.children)
@@ -69,6 +76,13 @@ class Node:
         return f'{type(self).__name__} <{self.type}> ({self.depth})' + '\n' + '\n'.join('  '*self.depth + str(n) for n in self.children)
 
     def __getitem__(self, key): return self.children[key]
+
+class Keyword(Node):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def canonical(self): return '`'+self.text()+'`'
+    def source(self): pass
 
 class Tree(Node):
     def __init__(self, *args, **kwargs):
@@ -100,7 +114,15 @@ class Pair(Node):
         super().__init__(*args, **kwargs)
         self.key, self.value = self.children
 
-    def markdown(self, *args, **kwargs) -> str: return ''
+    def markdown(self, *args, **kwargs) -> str:
+        if self.key.text() in ['info', 'format', 'filters', 'repo', 'keywords']:
+            return ''
+        if self.parent.parent.format:
+            r = self.parent.parent.format.text()
+            for a in ['key', 'value']:
+                r = r.replace('.' + a, getattr(self, a).markdown())
+            return r
+        return f'{self.key.markdown()}: {self.value.markdown()}'
 
 class Multiline(Node):
     def __init__(self, *args, **kwargs):
