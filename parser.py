@@ -32,40 +32,44 @@ class Token:
         return f'Token <{self.type}, {self.line}:{self.column}> {self.value}'
 
 class Node:
-    def __init__(self, source, parent=None, depth=0, root=None):
+    def __init__(self, source=None, parent=None, children=None, depth=0, root=None):
         self.parent = parent
+        self.children = children
         self.root = root if root else self
         self.children = []
         self.source = source
+        self.head = self.children[0] if self.children else None
 
-        self.meta = self.source.meta
-        self.type = self.source.data
+        if self.source:
+            self.meta = self.source.meta
+            self.type = self.source.data
+        else:
+            self.meta = None
+            self.type = 'synthetic'
+
         self.depth = depth
-        for c in self.source.children:
-            if isinstance(c, lark.Tree):
-                subclass = Node
-                types = [Pair, Multiline, Info, Tree, Command, Keyword]
-                names = list(map(lambda t: t.__name__.lower(), types))
-                #print(names)
-                if c.data in names: subclass = types[names.index(c.data)]
-                self.children.append(subclass(
-                    c, self, self.depth+1, root=self.root if self.root else self))
-            elif c is None: self.children.append(c)
-            else:
-                assert isinstance(c, lark.Token), c
-                self.children.append(Token(c))
+        if self.source:
+            for c in self.source.children:
+                if isinstance(c, lark.Tree):
+                    subclass = Node
+                    types = [Pair, Multiline, Info, Tree, Command, Keyword]
+                    names = list(map(lambda t: t.__name__.lower(), types))
+                    #print(names)
+                    if c.data in names: subclass = types[names.index(c.data)]
+                    self.children.append(subclass(
+                        source=c, parent=self,
+                        depth=self.depth+1,
+                        root=self.root if self.root else self))
+                elif c is None: self.children.append(c)
+                else:
+                    assert isinstance(c, lark.Token), c
+                    self.children.append(Token(c))
 
-        items = list(filter(lambda x:
-                (x.type == 'pair' and x.text() == 'items') or
-                (x.type == 'tree' and x.children and x[0].text() == 'items'), self.children))
-        self.items = items[0] if items else None
+            for n in self.filter(Pair, Tree).filter(lambda x: x.head):
+                attr = n.head.text()
+                if not hasattr(self, attr):
+                    setattr(self, attr, n)
 
-        info = list(filter(lambda x: x.type == 'pair' and x.key.text() == 'info', self.children))
-        self.info = info[0].value if info else None
-
-        form = list(filter(lambda x: x.type == 'pair' and x.key.text() == 'format', self.children))
-        self.format = form[0].value if form else None
-        
         self.tags = []
 
     def markdown(self, *args, **kwargs) -> str:
