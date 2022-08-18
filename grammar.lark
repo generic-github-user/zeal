@@ -9,23 +9,37 @@ LETTER: LOWERCASE | UPPERCASE
 NONZERO: "1".."9"
 DIGIT: NONZERO | "0"
 ALPHANUMERIC: LETTER | DIGIT
+INT: NONZERO DIGIT*
+INTC: (INT ",")* INT
 
 word: LETTER+
-!wordlike: (word | (word "-" word)) PUNCTUATION?
-text: (expression " ")* expression
+!wordlike: (word | (word ("-" | "'") word)) PUNCTUATION?
+text: (expression PUNCTUATION? " ")* expression
 
 BRACKETS: "[" | "]"
-PUNCTUATION: ";" | "," | "-" | "_" | "/" | "'" | "\""
+PUNCTUATION: ";" | ":" | "," | "-" | "_" | "/" | "'"
 		| "." | "{" | "}" | "(" | ")" | "~"
 		| "`" | ">" | "?" | "=" | "&" | "*" | "#" | "%"
 ANY: LETTER | PUNCTUATION | DIGIT | " "
 
-pair: text ":" " "? (info | multiline)
+pair: text ":" " "? (info | multiline | url | quote)
 info.1: text
 multiline.2: "[" (info _NL?)+ "]"
-group: "{" text "}"
-expression: group | wordlike | command
-!command: "%" expression
+group: "{" text | multiline "}"
+expression: INT | INTC | acronym | group | wordlike | command | funccall | keyword | paren
+quote: "\"" (ANY | BRACKETS | ":")* "\""
+!command: ("%" | "^") expression
+!url: "http" "s"? (PUNCTUATION | ALPHANUMERIC)+
+funccall: wordlike "(" wordlike ")"
+//ext: "." wordlike
+keyword: "`" "."? expression "`"
+filename: word "." word
+paren: "(" text ")"
+acronym: (LETTER ".")+
+
+//list:
+//clist:
 
 %import common.WS_INLINE
 %declare _INDENT _DEDENT
+//%ignore WS_INLINE
