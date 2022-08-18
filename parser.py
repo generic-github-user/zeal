@@ -46,6 +46,7 @@ class Node:
                 subclass = Node
                 types = [Pair, Multiline, Info, Tree, Command, Keyword]
                 names = list(map(lambda t: t.__name__.lower(), types))
+                #print(names)
                 if c.data in names: subclass = types[names.index(c.data)]
                 self.children.append(subclass(
                     c, self, self.depth+1, root=self.root if self.root else self))
@@ -67,7 +68,7 @@ class Node:
         
         self.tags = []
 
-    def markdown(self) -> str:
+    def markdown(self, *args, **kwargs) -> str:
         if self.type in ['word', 'wordlike', 'quote', 'url']: return ''.join(c.markdown() for c in self.children)
         elif self.type == 'text': return ' '.join(c.markdown() for c in self.children)
         else: return '\n'.join(c.markdown() for c in self.children)
@@ -91,7 +92,7 @@ class Tree(Node):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def markdown(self, aslist=False) -> str:
+    def markdown(self, aslist=False, **kwargs) -> str:
         if self.children and self[0].text() in ['items']: return ''
         result = ''.join(c.markdown(aslist) for c in self.children)
         if self.info: result += self.info.markdown()
@@ -127,31 +128,28 @@ class Pair(Node):
             return r + '\n'
         return f'{self.key.markdown()}: {self.value.markdown()}\n'
 
-class Multiline(Node):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def markdown(self, *args, **kwargs) -> str:
-        return ' '.join(c.markdown() for c in self.children)
-
-
-
-def NodeType(*properties, **methods):
-    class NewType:
+def NodeType(name: str, *properties, **methods):
+    class NewType(Node):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             for i, p in enumerate(properties):
                 setattr(self, p, self[i])
+    NewType.__name__ = name
     for n, m in methods.items(): setattr(NewType, n, m)
     return NewType
 
 
 def command_markdown(self, *args, **kwargs) -> str:
     result = self.content.markdown()
+    #print("Processing command")
     if self.symbol.text() == '%':
         result = f'[{result}](https://en.wikipedia.org/wiki/{urllib.parse.quote(result)})'
     return result
-Command = NodeType('symbol', 'content', markdown=command_markdown)
+Command = NodeType('Command', 'symbol', 'content', markdown=command_markdown)
+
+def m_markdown(self, *args, **kwargs):
+    return ' '.join(c.markdown() for c in self.children)
+Multiline = NodeType('Multiline', markdown=m_markdown)
 
 
 with open('grammar.lark', 'r') as grammar:
