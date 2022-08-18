@@ -22,14 +22,14 @@ PUNCTUATION: ";" | ":" | "," | "-" | "_" | "/" | "'"
 		| "`" | ">" | "?" | "=" | "&" | "*" | "#" | "%"
 ANY: LETTER | PUNCTUATION | DIGIT | " "
 
-pair: text ":" " "? (info | multiline | url | quote)
+pair: text ":" " "? (info | multiline | url | quote) // a key-value pair, i.e. in a dictionary; useful for setting parameters and formatting rules for trees
 info.1: text
-multiline.2: "[" (info _NL?)+ "]"
-group: "{" text | multiline "}"
-expression: INT | INTC | acronym | group | wordlike | command | funccall | keyword | paren
-quote: "\"" (ANY | BRACKETS | ":")* "\""
-!command: ("%" | "^") expression
-!url: "http" "s"? (PUNCTUATION | ALPHANUMERIC)+
+multiline.2: "[" (info _NL?)+ "]" // text across multiple lines (useful in a line-based text editor like Vim)
+group: "{" text | multiline "}" // a simple wrapper to combine other nodes, e.g. for executing a function on some block of text
+expression: INT | INTC | acronym | group | wordlike | command | funccall | keyword | paren // an expression, something that can be acted upon by functions/commands
+quote: "\"" (ANY | BRACKETS | ":")* "\"" // quoted text which can be used to define formatting templates
+!command: ("%" | "^") expression // a command that processes a group of nodes
+!url: "http" "s"? (PUNCTUATION | ALPHANUMERIC)+ // a standard web URL
 funccall: wordlike "(" wordlike ")"
 //ext: "." wordlike
 keyword: "`" "."? expression "`"
